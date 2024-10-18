@@ -69,8 +69,18 @@ textarea {
 }
 
 #confirmation {
-  color: green;
+  color: lightgreen;
   font-weight: bold;
+}
+
+#submit_wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#loading {
+  width: 100%;
 }
 
 button {

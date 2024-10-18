@@ -9,9 +9,14 @@ export type Movie = {
   releaseYear: number;
 };
 
-const useMovies = (): { movies: Movie[]; isLoading: boolean } => {
+const useMovies = (): {
+  movies: Movie[];
+  isLoading: boolean;
+  error: string;
+} => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState("");
   const url = "http://localhost:3000/movies";
 
   const fetchData = async (): Promise<void> => {
@@ -22,7 +27,7 @@ const useMovies = (): { movies: Movie[]; isLoading: boolean } => {
       setMovies(movies);
       setIsLoading(false);
     } catch (e) {
-      console.log(e);
+      setError("Something went wrong when fetching movies");
     }
   };
 
@@ -30,7 +35,7 @@ const useMovies = (): { movies: Movie[]; isLoading: boolean } => {
     fetchData();
   }, [url]);
 
-  return { movies: movies, isLoading };
+  return { movies: movies, isLoading, error };
 };
 
 export default useMovies;

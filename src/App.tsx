@@ -13,17 +13,30 @@ import useMovies, { Movie } from "./hooks/useMovies";
 import useCompany, { Company } from "./hooks/useCompany";
 import arrow_down from "/arrow_down.png";
 import useSubmitReview from "./hooks/useSubmitReview";
+import CustomModal from "./components/Modal";
+import Form from "./components/Form";
+import useIsMobile from "./hooks/useIsMobile";
 
 export const App = () => {
-  const { movies: moviesResponse, isLoading } = useMovies();
-  const companies = useCompany();
+  const {
+    movies: moviesResponse,
+    isLoading: isLoadingMovies,
+    error: errorMovies,
+  } = useMovies();
+  const {
+    companies,
+    isLoading: isLoadingCompanies,
+    error: errorCompanies,
+  } = useCompany();
   const submitReview = useSubmitReview();
+  const isMobile = useIsMobile();
 
   // const movieLength = useRef(mockMovieData.length);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<Movie>();
   const [isDescending, setIsDescending] = useState<boolean>(true);
   const [review, setReview] = useState("");
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     setMovies(
@@ -41,14 +54,6 @@ export const App = () => {
     )
       ?.toString()
       .substring(0, 3);
-  };
-
-  const refreshButton = (buttonText: any) => {
-    if (companies) {
-      return <button>{buttonText}</button>;
-    } else {
-      return <p>No movies loaded yet</p>;
-    }
   };
 
   const onSortClick = (): void => {
@@ -76,24 +81,27 @@ export const App = () => {
     e.preventDefault();
     if (review) {
       setConfirmationMessage(await submitReview());
-      setTimeout(() => setConfirmationMessage(""), 3000);
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  };
 
-  console.log(review);
+      setTimeout(() => {
+        setConfirmationMessage("");
+        setOpen(false);
+      }, 3000);
+    }
+    setReview("");
+  };
 
   return (
     <div>
       <h2>Welcome to Movie database!</h2>
-      {refreshButton("Refresh")}
+      <p id="error">{errorMovies}</p>
+      <p id="error">{errorCompanies}</p>
+      <button type="button" onClick={() => window.location.reload()}>
+        Refresh
+      </button>
       <p>
         Total movies displayed <strong>{movies.length}</strong>
       </p>
-      {!isLoading ? (
+      {!isLoadingCompanies && !isLoadingMovies ? (
         <table>
           <tbody>
             <tr>
@@ -132,7 +140,7 @@ export const App = () => {
           </tbody>
         </table>
       ) : (
-        <p>Loading...</p>
+        <p id="loading">Loading...</p>
       )}
       {selectedMovie ? (
         <p>
@@ -141,27 +149,41 @@ export const App = () => {
       ) : (
         <p>No movie selected</p>
       )}
-
-      {selectedMovie && <p>Please leave a review below</p>}
-      {selectedMovie && (
-        <form onSubmit={(e) => onSubmit(e)}>
-          <label>
-            Review:
-            <textarea
-              onChange={(e) => setReview(e.currentTarget.value)}
-              placeholder="Write a review before submitting"
-            />
-          </label>
-          {review.length > 100 && (
-            <p id="error">{"Review should be max. 100 characters!"}</p>
-          )}
-          <button disabled={!review || review.length > 100} type="submit">
-            Submit review
-          </button>
-        </form>
+      {errorCompanies || errorMovies ? (
+        <p id="error">
+          Please refresh page to get rid of errors before proceeding!
+        </p>
+      ) : null}
+      {selectedMovie && !isMobile && !errorCompanies && !errorMovies && (
+        <p>Please leave a review below</p>
       )}
-
-      {confirmationMessage && <p id="confirmation">{confirmationMessage}</p>}
+      {selectedMovie && !isMobile && !errorCompanies && !errorMovies && (
+        <Form
+          confirmationMessage={confirmationMessage}
+          onSubmit={onSubmit}
+          setReview={setReview}
+          review={review}
+        ></Form>
+      )}
+      {isMobile && (
+        <div>
+          {selectedMovie && !errorCompanies && !errorMovies && (
+            <button type="button" onClick={() => setOpen(true)}>
+              Open form
+            </button>
+          )}
+          <CustomModal
+            confirmationMessage={confirmationMessage}
+            onSubmit={onSubmit}
+            review={review}
+            setReview={setReview}
+            handleClose={() => {
+              setOpen(false), setReview("");
+            }}
+            open={open}
+          />
+        </div>
+      )}
     </div>
   );
 };
